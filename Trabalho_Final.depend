@@ -20,3 +20,26 @@
 	<string>
 	<vector>
 
+1664328612 source:d:\users\bnero\documents\github\cpd_trabalho_final\main.cpp
+	<iostream>
+	"./parser.hpp"
+	<sstream>
+	<fstream>
+	<string>
+	<cstdlib>
+	<cstdio>
+	<forward_list>
+	<vector>
+	<math.h>
+	<stdlib.h>
+	<iterator>
+	<algorithm>
+	<memory>
+
+1662378299 d:\users\bnero\documents\github\cpd_trabalho_final\parser.hpp
+	<fstream>
+	<memory>
+	<stdexcept>
+	<string>
+	<vector>
+

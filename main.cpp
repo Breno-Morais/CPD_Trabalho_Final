@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <iterator>
 #include <algorithm>
+#include <memory>
 
 using namespace std;
 
@@ -153,12 +154,257 @@ int charAt(string str, int d)
         return (str.at(d))-65;
 }
 
+#define ALPHABET_SIZE 31
+
+
+void printPlayer(int id, hashtable<int,Player> players)
+{
+    Player temp = players[id]->value;
+    std::cout << id << ", " << temp.name << ", [" << temp.positions << "] ," << temp.rating << ", " << temp.rcount << std::endl;
+}
+
+
+class Trie_Node
+{
+    public:
+        shared_ptr<Trie_Node> children[ALPHABET_SIZE];
+
+        bool isWord;
+        int id;
+
+        Trie_Node()
+        {
+            for(int i = 0; i < ALPHABET_SIZE; i++)
+            {
+                children[i] = shared_ptr<Trie_Node>();
+            }
+
+            isWord = false;
+            id = -1;
+        }
+};
+
+class Trie
+{
+    public:
+        shared_ptr<Trie_Node> root;
+        int Total_Words;
+
+        Trie()
+        {
+            root = shared_ptr<Trie_Node>(new Trie_Node());
+            Total_Words = 0;
+        }
+
+        ~Trie()
+        {
+        }
+
+        void InsertWord(string& str, int id)
+        {
+            shared_ptr<Trie_Node> current = root;
+            for(int i = 0; i < str.size(); i++)
+            {
+                int c = ItoC(str[i]);
+
+                /* Debugação
+                if(c < 0)
+                std::cout << "i: " << i << ", str:" << str << ", str[i]:" << str[i] << ", ItoC: " << c << std::endl;
+                */
+
+                if(current->children[c] == shared_ptr<Trie_Node>(nullptr))
+                {
+                    current->children[c] = shared_ptr<Trie_Node>(new Trie_Node());
+                }
+
+                current = (current->children[c]);
+            }
+
+            current->isWord = true;
+            current->id = id;
+        }
+
+        bool SearchWord(string& str)
+        {
+            shared_ptr<Trie_Node> current = root;
+
+            for(int i = 0; i < str.size(); i++)
+            {
+                if(current->children[ItoC(str[i])] == shared_ptr<Trie_Node>(nullptr))
+                    return false;
+
+                current = (current->children[ItoC(str[i])]);
+            }
+
+            if(current->isWord == true)
+            {
+                std::cout << "\nID: " << current->id << std::endl;
+                return true;
+            }
+
+            return false;
+        }
+
+        int printQuery(const string query)
+        {
+            shared_ptr<Trie_Node> current = root;
+            for(char c: query)
+            {
+                int ind = ItoC(c);
+
+                if(!current->children[ind])
+                    return 0;
+
+                current = current->children[ind];
+            }
+
+            if(isLastNode(current))
+            {
+                std::cout << query << std::endl;
+                return -1;
+            }
+
+            suggestionsRec(current, query);
+            return 1;
+        }
+
+        void printPlayerQuery(hashtable<int,Player> players, const string query)
+        {
+            shared_ptr<Trie_Node> current = root;
+            for(char c: query)
+            {
+                int ind = ItoC(c);
+
+                if(!current->children[ind])
+                    return;
+
+                current = current->children[ind];
+            }
+
+            if(isLastNode(current))
+            {
+                printPlayer(current->id, players);
+                return;
+            }
+
+            queryPlayer(current, query, players);
+            return;
+        }
+
+private:
+
+        bool isLastNode(shared_ptr<Trie_Node> current)
+        {
+            for(int i = 0; i < ALPHABET_SIZE; i++)
+                if(current->children[i])
+                    return false;
+            return true;
+        }
+
+        void suggestionsRec(shared_ptr<Trie_Node> current, string currPrefix)
+        {
+            if(current->isWord)
+            std::cout << currPrefix << std::endl;
+
+            for(int i = 0; i < ALPHABET_SIZE; i++)
+            {
+                if(current->children[i])
+                {
+                    char child = 'a' + i;
+                    suggestionsRec(current->children[i], currPrefix + child);
+                }
+            }
+        }
+
+        void queryPlayer(shared_ptr<Trie_Node> current, string currPrefix, hashtable<int,Player> players)
+        {
+            if(current->isWord)
+                printPlayer(current->id, players);
+
+            for(int i = 0; i < ALPHABET_SIZE; i++)
+            {
+                //std::cout << "CUR: " << current << " CH: " << current->children[i] << " i: " << i << std::endl;
+                if(current->children[i])
+                {
+                    char child = CtoI(i);
+                    queryPlayer(current->children[i], currPrefix + child, players);
+                }
+            }
+        }
+
+        int ItoC(char c)
+        {
+            switch(c)
+            {
+                case ' ':
+                    return 26;
+                    break;
+
+                case '\'':
+                    return 27;
+                    break;
+
+                case '-':
+                    return 28;
+                    break;
+
+                case '.':
+                    return 29;
+                    break;
+
+                case '"':
+                    return 30;
+                    break;
+
+                default:
+                    return static_cast<int>(std::tolower(c) - 'a');
+            }
+        }
+
+        char CtoI(int i)
+        {
+            switch(i)
+            {
+                case 26:
+                    return ' ';
+                    break;
+
+                case 27:
+                    return '\'';
+                    break;
+
+                case 28:
+                    return '-';
+                    break;
+
+                case 29:
+                    return '.';
+                    break;
+
+                case 30:
+                    return '"';
+                    break;
+
+                default:
+                    return static_cast<int>('a' + i);
+            }
+        }
+};
+
 using namespace aria::csv;
 
 int main() {
     hashtable<int,Player> players_table(18944 * 5);
     hashtable<int,vector<int>> user_ratings_table;
     hashtable<string,vector<int>> position_table(21);
+    shared_ptr<Trie> TriePlayers(new Trie());
+
+        /*
+        if(comp == -1)
+            std::cout << "Nenhuma outra palavra encontrada\n";
+        else if(comp == 0)
+            std::cout << "Nenhuma palavra encontrada\n";
+        */
 
     std::ifstream fPlayer("players.csv");
     CsvParser parser(fPlayer);
@@ -179,9 +425,12 @@ int main() {
 
         players_table.insere(temp.fifa_id,temp);
 
+        TriePlayers->InsertWord(temp.name, temp.fifa_id);
+
         vector<string> player_positions = split(temp.positions,",");
         for(string pos: player_positions)
             position_table.insere_array(pos, temp.fifa_id);
+
     }
 
     std::ifstream fRating("miniminirating.csv");
@@ -210,5 +459,16 @@ int main() {
         temp->rcount += 1;
         user_ratings_table.insere_array(user_id, player_id);
     }
+
+    while(true)
+    {
+        string nome;
+        std::cout << "Pesquise jogadores: ";
+        std::cin >> nome;
+
+        TriePlayers->printPlayerQuery(players_table, nome);
+    }
+
+    return 0;
 }
 
