@@ -158,13 +158,14 @@ int charAt(string str, int d)
 #define ALPHABET_SIZE 31
 
 hashtable<int,Player> players_table(18944 * 5);
+hashtable<int,vector<int>> user_ratings_table;
+hashtable<string,vector<int>> position_table(21);
 
 void printPlayer(int id)
 {
     Player temp = players_table[id]->value;
     std::cout << id << ", " << temp.name << ", [" << temp.positions << "] ," << temp.rating << ", " << temp.rcount << std::endl;
 }
-
 
 class Trie
 {
@@ -325,6 +326,7 @@ private:
             for(unsigned int i = 0; i < prefixo.length(); i++)
             {
                 index = ItoC(prefixo.at(i));
+                if(current->children[index] == NULL) return;
                 current = current->children[index];
             }
 
@@ -346,11 +348,69 @@ private:
         }
 };
 
+void quickSort(int *arr, int low, int high)
+{
+    int i = low;
+    int j = high;
+    float pivot = players_table[arr[(i + j) / 2]]->value.rating;
+    int temp;
+
+    while (i <= j)
+    {
+        while (players_table[arr[i]]->value.rating < pivot)
+            i++;
+        while (players_table[arr[j]]->value.rating > pivot)
+            j--;
+        if (i <= j)
+        {
+            temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i++;
+            j--;
+        }
+    }
+    if (j > low)
+        quickSort(arr, low, j);
+    if (i < high)
+        quickSort(arr, i, high);
+}
+
+
+void user_search(int n)
+{
+    unsigned int vec_size = user_ratings_table[n]->value.size();
+    unsigned int true_size;
+    int top20[20];
+    if(vec_size > 20)
+        true_size = 20;
+    else
+        true_size = vec_size;
+
+    for(int i = 0; i < true_size; i++)
+    {
+        top20[i] = players_table[user_ratings_table[n]->value[i]]->value.fifa_id;
+    }
+    quickSort(top20, 0, vec_size-1);
+
+    for(int i = true_size; i < vec_size; i++)
+    {
+        float temp = players_table[user_ratings_table[n]->value[i]]->value.rating;
+        float last_rating = players_table[top20[19]]->value.rating;
+        if(temp > last_rating)
+        {
+            top20[19] = players_table[user_ratings_table[n]->value[i]]->value.fifa_id;
+            quickSort(top20, 0, vec_size-1);
+        }
+    }
+
+    for(unsigned int i = 0; i < true_size; i++)
+        printPlayer(top20[i]);
+}
+
 using namespace aria::csv;
 
 int main() {
-    hashtable<int,vector<int>> user_ratings_table;
-    hashtable<string,vector<int>> position_table(21);
     Trie *TriePlayers = new Trie();
 
     std::ifstream fPlayer("players.csv");
@@ -402,17 +462,33 @@ int main() {
         else
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
+        temp->rating = 0;
+
         temp->rcount += 1;
         user_ratings_table.insere_array(user_id, player_id);
     }
 
     while(true)
     {
-        string nome;
-        std::cout << "Pesquise jogadores: ";
-        std::cin >> nome;
+        std::cout << "& ";
+        std::string comando;
+        std::getline(std::cin, comando);
+        std::string delimiter = " ";
 
-        TriePlayers->possibleSufixos(nome);
+        size_t pos = comando.find(delimiter);
+        std::string token;
+
+        token = comando.substr(0, pos);
+        comando.erase(0, pos + delimiter.length());
+
+        if(token == "user")
+        {
+            user_search(std::atoi(comando.c_str()));
+        } else if(token == "player")
+        {
+            TriePlayers->possibleSufixos(comando);
+        } else if(token == "end")
+            return 0;
     }
 
     return 0;
