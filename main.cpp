@@ -14,13 +14,14 @@
 #include <memory>
 
 using namespace std;
+using namespace aria::csv;
 
 struct Player{
     int fifa_id; // Id do Jogador
     string name; // Nome do Jogador
-    string positions; // Posições do Jogador
-    float rating; // Média de Avaliação
-    int rcount; // Número de Avaliações
+    string positions; // Posiï¿½ï¿½es do Jogador
+    float rating; // Mï¿½dia de Avaliaï¿½ï¿½o
+    int rcount; // Nï¿½mero de Avaliaï¿½ï¿½es
 };
 
 template <class Tkey, class Tvalue>
@@ -66,8 +67,8 @@ class hashtable
             unsigned int hashI = hashfunction(key);
 
             for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
-                if(key == x->key) // Se o elemento já existe
-                    return;   // Não faz nada
+                if(key == x->key) // Se o elemento jï¿½ existe
+                    return;   // Nï¿½o faz nada
             }
             Node<Tkey,Tvalue> myNode = {.key = key, .value = value};
             table[hashI].push_front(myNode);
@@ -79,7 +80,7 @@ class hashtable
 
             for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
             {
-                if(key == x->key) // Se o elemento já existe
+                if(key == x->key) // Se o elemento jï¿½ existe
                 {
                     x->value.push_back(value);
                     return;
@@ -327,7 +328,11 @@ private:
             for(unsigned int i = 0; i < prefixo.length(); i++)
             {
                 index = ItoC(prefixo.at(i));
-                if(current->children[index] == NULL) return;
+                if(current->children[index] == NULL) 
+                {
+                    cout << "No players found :(" << endl;
+                    return;
+                }
                 current = current->children[index];
             }
 
@@ -439,16 +444,30 @@ void position_search(int n, std::string pos)
         printPlayer(topN[i]);
 }
 
-using namespace aria::csv;
+vector<string> str_tokenizer(string s, char del)
+{
+    vector<string> vector_s;
+    stringstream ss(s);
+    string word;
+    while (!ss.eof()) 
+    {
+        getline(ss, word, del);
+        vector_s.push_back(word);
+    }
 
-int main() {
+    return vector_s;
+}
+
+int main(int argc, char** argv) 
+{
+    cout << "Reading names and inserting in trie tree..." << endl;
     Trie *TriePlayers = new Trie();
-
     std::ifstream fPlayer("players.csv");
     CsvParser parser(fPlayer);
 
     bool ignore_first = true;
-    for (auto& row : parser) {
+    for (auto& row : parser) 
+    {
         if(ignore_first)
         {
             ignore_first = false;
@@ -462,15 +481,15 @@ int main() {
         temp.rcount = 0;
 
         players_table.insere(temp.fifa_id,temp);
-
         TriePlayers->InsertWord(temp.name, temp.fifa_id);
 
-        vector<string> player_positions = split(temp.positions,",");
+        vector<string> player_positions = str_tokenizer(temp.positions, ',');
         for(string pos: player_positions)
             position_table.insere_array(pos, temp.fifa_id);
 
     }
 
+    cout << "Reading ratings and inserting in hash table..." << endl;
     std::ifstream fRating("minirating.csv");
     CsvParser parser1(fRating);
 
@@ -497,7 +516,9 @@ int main() {
         user_ratings_table.insere_array(user_id, player_id);
     }
 
-    while(true)
+    cout << "Done" << endl;
+    std::string token;
+    while(token != "exit")
     {
         std::cout << "& ";
         std::string comando;
@@ -505,7 +526,6 @@ int main() {
         std::string delimiter = " ";
 
         size_t pos = comando.find(delimiter);
-        std::string token;
 
         token = comando.substr(0, pos);
         comando.erase(0, pos + delimiter.length());
@@ -525,8 +545,10 @@ int main() {
             if((comando.at(0) == '\'') && (comando.at(comando.length()-1) == '\''))
                 position_search(n, comando.substr(1, comando.length()-2));
         }
-        else if(token == "end")
-            return 0;
+        else if(token == "exit")
+            cout << "Exiting..." << endl;
+        else
+            cout << "Unrecognized command" << endl;
     }
 
     return 0;
