@@ -18,9 +18,9 @@ using namespace std;
 struct Player{
     int fifa_id; // Id do Jogador
     string name; // Nome do Jogador
-    string positions; // Posições do Jogador
-    float rating; // Média de Avaliação
-    int rcount; // Número de Avaliações
+    string positions; // Posiï¿½ï¿½es do Jogador
+    float rating; // Mï¿½dia de Avaliaï¿½ï¿½o
+    int rcount; // Nï¿½mero de Avaliaï¿½ï¿½es
 };
 
 template <class Tkey, class Tvalue>
@@ -66,8 +66,8 @@ class hashtable
             unsigned int hashI = hashfunction(key);
 
             for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
-                if(key == x->key) // Se o elemento já existe
-                    return;   // Não faz nada
+                if(key == x->key) // Se o elemento jï¿½ existe
+                    return;   // Nï¿½o faz nada
             }
             Node<Tkey,Tvalue> myNode = {.key = key, .value = value};
             table[hashI].push_front(myNode);
@@ -78,7 +78,7 @@ class hashtable
             unsigned int hashI = hashfunction(key);
 
             for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
-                if(key == x->key) // Se o elemento já existe
+                if(key == x->key) // Se o elemento jï¿½ existe
                 {
                     x->value.push_back(value);
                     return;
@@ -326,7 +326,11 @@ private:
             for(unsigned int i = 0; i < prefixo.length(); i++)
             {
                 index = ItoC(prefixo.at(i));
-                if(current->children[index] == NULL) return;
+                if(current->children[index] == NULL) 
+                {
+                    cout << "NÃ£o foi encontrado nenhum jogador." << endl;
+                    return;
+                }
                 current = current->children[index];
             }
 
@@ -408,6 +412,20 @@ void user_search(int n)
         printPlayer(top20[i]);
 }
 
+vector<string> str_tokenizer(string s, char del)
+{
+    vector<string> vector_s;
+    stringstream ss(s);
+    string word;
+    while (!ss.eof()) 
+    {
+        getline(ss, word, del);
+        vector_s.push_back(word);
+    }
+
+    return vector_s;
+}
+
 using namespace aria::csv;
 
 int main() {
@@ -434,8 +452,8 @@ int main() {
 
         TriePlayers->InsertWord(temp.name, temp.fifa_id);
 
-        vector<string> player_positions = split(temp.positions,",");
-        for(string pos: player_positions)
+        vector<string> player_positions = str_tokenizer(temp.positions, ',');
+        for(string pos : player_positions)
             position_table.insere_array(pos, temp.fifa_id);
 
     }
