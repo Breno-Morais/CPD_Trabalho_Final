@@ -77,7 +77,8 @@ class hashtable
         {
             unsigned int hashI = hashfunction(key);
 
-            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
+            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
+            {
                 if(key == x->key) // Se o elemento já existe
                 {
                     x->value.push_back(value);
@@ -376,7 +377,6 @@ void quickSort(int *arr, int low, int high)
         quickSort(arr, i, high);
 }
 
-
 void user_search(int n)
 {
     unsigned int vec_size = user_ratings_table[n]->value.size();
@@ -404,8 +404,39 @@ void user_search(int n)
         }
     }
 
-    for(unsigned int i = 0; i < true_size; i++)
+    for(int i = true_size - 1; i >= 0; i--)
         printPlayer(top20[i]);
+}
+
+void position_search(int n, std::string pos)
+{
+    unsigned int vec_size = position_table[pos]->value.size();
+    unsigned int true_size;
+    int topN[n];
+    if(vec_size > n)
+        true_size = n;
+    else
+        true_size = vec_size;
+
+    for(int i = 0; i < true_size; i++)
+    {
+        topN[i] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+    }
+    quickSort(topN, 0, n-1);
+
+    for(int i = true_size; i < vec_size; i++)
+    {
+        float temp = players_table[position_table[pos]->value[i]]->value.rating;
+        float last_rating = players_table[topN[0]]->value.rating;
+        if(temp > last_rating)
+        {
+            topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+            quickSort(topN, 0, n-1);
+        }
+    }
+
+    for(int i = true_size - 1; i >= 0; i--)
+        printPlayer(topN[i]);
 }
 
 using namespace aria::csv;
@@ -462,8 +493,6 @@ int main() {
         else
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
-        temp->rating = 0;
-
         temp->rcount += 1;
         user_ratings_table.insere_array(user_id, player_id);
     }
@@ -484,10 +513,19 @@ int main() {
         if(token == "user")
         {
             user_search(std::atoi(comando.c_str()));
-        } else if(token == "player")
+        }
+        else if(token == "player")
         {
             TriePlayers->possibleSufixos(comando);
-        } else if(token == "end")
+        }
+        else if(token.substr(0,3) == "top")
+        {
+            token.erase(0,3);
+            int n = std::atoi(token.c_str());
+            if((comando.at(0) == '\'') && (comando.at(comando.length()-1) == '\''))
+                position_search(n, comando.substr(1, comando.length()-2));
+        }
+        else if(token == "end")
             return 0;
     }
 
