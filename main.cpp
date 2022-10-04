@@ -20,6 +20,7 @@ struct Player{
     int fifa_id; // Id do Jogador
     string name; // Nome do Jogador
     string positions; // Posi��es do Jogador
+    vector<string> tags; // tags do jogador
     float rating; // M�dia de Avalia��o
     int rcount; // N�mero de Avalia��es
 };
@@ -156,6 +157,8 @@ int charAt(string str, int d)
     else
         return (str.at(d))-65;
 }
+
+// Estruturas definidas globalmente
 
 #define ALPHABET_SIZE 31
 
@@ -452,7 +455,8 @@ vector<string> str_tokenizer(string s, char del)
     while (!ss.eof()) 
     {
         getline(ss, word, del);
-        vector_s.push_back(word);
+        if (!word.empty())
+            vector_s.push_back(word);
     }
 
     return vector_s;
@@ -516,6 +520,41 @@ int main(int argc, char** argv)
         user_ratings_table.insere_array(user_id, player_id);
     }
 
+    cout << "Reading tags and inserting in hash table..." << endl;
+    ifstream fTags("tags.csv");
+    CsvParser parser2(fTags);
+
+    ignore_first = true;
+    for (auto& row : parser2)
+    {
+        if (ignore_first)
+        {
+            ignore_first = false;
+            continue;
+        }
+
+        unsigned int player_id = std::atoi(row[1].c_str());
+        bool alreadyInserted = false;
+        string player_tag = row[2];
+
+        Player* temp = &(players_table[player_id]->value);
+
+        for (string inserted_tag : temp->tags) // não adiciona tags repetidas
+        {
+            if (player_tag == inserted_tag)
+                alreadyInserted = true;
+        }
+        if (!alreadyInserted)
+            temp->tags.push_back(player_tag);
+
+        cout << temp->name << " tags: ";
+        for (string tt : temp->tags)
+            cout << tt << ", ";
+        cout << endl;
+
+        // INSERIR NA TABELA HASH
+    }
+
     cout << "Done" << endl;
     std::string token;
     while(token != "exit")
@@ -544,6 +583,18 @@ int main(int argc, char** argv)
             int n = std::atoi(token.c_str());
             if((comando.at(0) == '\'') && (comando.at(comando.length()-1) == '\''))
                 position_search(n, comando.substr(1, comando.length()-2));
+        }
+        else if (token == "tags")
+        {
+            // vetor de strings contendo tags
+            vector<string> tags = str_tokenizer(comando, '"');
+            
+            // filtra espaços entre tags do vetor de strings para obter apenas as tags
+            for (auto str = tags.begin(); str != tags.end(); str++)
+            {
+                if (*str == " ")
+                    tags.erase(str--);
+            }
         }
         else if(token == "exit")
             cout << "Exiting..." << endl;
