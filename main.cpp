@@ -52,7 +52,7 @@ class hashtable
     public:
         int M; // Tamanho
 
-        hashtable(int T_size = 1)
+        hashtable(int T_size = 32771)
         {
             M = T_size;
             table = new forward_list<Node<Tkey, Tvalue>>[M];
@@ -494,7 +494,7 @@ int main(int argc, char** argv)
     }
 
     cout << "Reading ratings and inserting in hash table..." << endl;
-    std::ifstream fRating("minirating.csv");
+    std::ifstream fRating("rating.csv");
     CsvParser parser1(fRating);
 
     ignore_first = true;
@@ -547,10 +547,10 @@ int main(int argc, char** argv)
         if (!alreadyInserted)
             temp->tags.push_back(player_tag);
 
-        cout << temp->name << " tags: ";
+        /*cout << temp->name << " tags: ";
         for (string tt : temp->tags)
             cout << tt << ", ";
-        cout << endl;
+        cout << endl;*/
 
         // INSERIR NA TABELA HASH
     }
