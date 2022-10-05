@@ -19,9 +19,10 @@ struct Player
 {
     int fifa_id; // Id do Jogador
     string name; // Nome do Jogador
-    string positions; // Posições do Jogador
-    float rating; // Média de Avaliação
-    int rcount; // Número de Avaliações
+    string positions; // Posiï¿½ï¿½es do Jogador
+    vector<string> tags; // tags do jogador
+    float rating; // Mï¿½dia de Avaliaï¿½ï¿½o
+    int rcount; // Nï¿½mero de Avaliaï¿½ï¿½es
 };
 
 struct Avaliacao
@@ -74,11 +75,11 @@ class hashtable
         {
             unsigned int hashI = hashfunction(key);
 
-            if(!Novo) // Se eu tenho certeza que esse elemento é novo, eu não preciso verificar
+            if(!Novo) // Se eu tenho certeza que esse elemento ï¿½ novo, eu nï¿½o preciso verificar
             {
                 for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
-                    if(key == x->key) // Se o elemento já existe
-                        return;   // Não faz nada
+                    if(key == x->key) // Se o elemento jï¿½ existe
+                        return;   // Nï¿½o faz nada
                 }
             }
             Node<Tkey,Tvalue> myNode = {.key = key, .value = value};
@@ -92,7 +93,7 @@ class hashtable
 
             for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
             {
-                if(key == x->key) // Se o elemento já existe
+                if(key == x->key) // Se o elemento jï¿½ existe
                 {
                     x->value.push_back(value);
                     return;

@@ -13,12 +13,11 @@ void quickSort(int *arr, int low, int high);
 void quickSortAv(Avaliacao *arr, int low, int high);
 void user_search(int n);
 void position_search(int n, std::string pos);
+vector<string> str_tokenizer(string s, char del);
 
-using namespace aria::csv;
-
-int main() {
+int main(int argc, char** argv) {
+    cout << "Reading names and inserting in trie tree..." << endl;
     Trie *TriePlayers = new Trie();
-
     std::ifstream fPlayer("players.csv");
     CsvParser parser(fPlayer);
 
@@ -37,17 +36,15 @@ int main() {
         temp.rcount = 0;
 
         players_table.insere(temp.fifa_id,temp);
-
         TriePlayers->InsertWord(temp.name, temp.fifa_id);
 
-        vector<string> player_positions = split(temp.positions,", ");
-
+        vector<string> player_positions = str_tokenizer(temp.positions, ',');
         for(string pos: player_positions)
             position_table.insere_array<int>(pos, temp.fifa_id);
-
     }
 
-    std::ifstream fRating("rating.csv");
+    cout << "Reading ratings and inserting in hash table..." << endl;
+    std::ifstream fRating("minirating.csv");
     CsvParser parser1(fRating);
 
     ignore_first = true;
@@ -70,19 +67,54 @@ int main() {
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
         temp->rcount += 1;
-        user_ratings_table.insere_array<Avaliacao>(user_id, {player_id, rating});
+        //user_ratings_table.insere_array<Avaliacao>(user_id, {player_id, rating});
+        //user_ratings_table.insere_array(user_id, player_id);
     }
 
-    while(true)
+    cout << "Reading tags and inserting in hash table..." << endl;
+    ifstream fTags("tags.csv");
+    CsvParser parser2(fTags);
+
+    ignore_first = true;
+    for (auto& row : parser2)
     {
-        std::cout << "& ";
-        std::string comando;
-        std::getline(std::cin, comando);
-        std::string delimiter = " ";
+        if (ignore_first)
+        {
+            ignore_first = false;
+            continue;
+        }
 
+        unsigned int player_id = std::atoi(row[1].c_str());
+        bool alreadyInserted = false;
+        string player_tag = row[2];
+
+        Player* temp = &(players_table[player_id]->value);
+
+        for (string inserted_tag : temp->tags) // não adiciona tags repetidas
+        {
+            if (player_tag == inserted_tag)
+                alreadyInserted = true;
+        }
+        if (!alreadyInserted)
+            temp->tags.push_back(player_tag);
+
+        /*cout << temp->name << " tags: ";
+        for (string tt : temp->tags)
+            cout << tt << ", ";
+        cout << endl;*/
+
+        // INSERIR NA TABELA HASH
+    }
+
+    cout << "Done" << endl;
+    string token;
+    while(token != "exit")
+    {
+        cout << "& ";
+        string comando;
+        getline(std::cin, comando);
+        string delimiter = " ";
         size_t pos = comando.find(delimiter);
-        std::string token;
-
         token = comando.substr(0, pos);
         comando.erase(0, pos + delimiter.length());
 
@@ -101,14 +133,26 @@ int main() {
             if((comando.at(0) == '\'') && (comando.at(comando.length()-1) == '\''))
                 position_search(n, comando.substr(1, comando.length()-2));
         }
-        else if(token == "end")
-            return 0;
+        else if (token == "tags")
+        {
+            // vetor de strings contendo tags
+            vector<string> tags = str_tokenizer(comando, '"');
+            
+            // filtra espaços entre tags do vetor de strings para obter apenas as tags
+            for (auto str = tags.begin(); str != tags.end(); str++)
+            {
+                if (*str == " ")
+                    tags.erase(str--);
+            }
+        }
+        else if(token == "exit")
+            cout << "Exiting..." << endl;
+        else
+            cout << "Unrecognized command" << endl;
     }
 
     return 0;
 }
-
-using namespace std;
 
 void printPlayer(int id)
 {
@@ -266,4 +310,19 @@ void position_search(int n, std::string pos)
     std::cout << "sofifa_id, name, positions, global_rating, count" << std::endl;
     for(int i = true_size; i >= 0; i--)
         printPlayer(topN[i]);
+}
+
+vector<string> str_tokenizer(string s, char del)
+{
+    vector<string> vector_s;
+    stringstream ss(s);
+    string word;
+    while (!ss.eof()) 
+    {
+        getline(ss, word, del);
+        if (!word.empty())
+            vector_s.push_back(word);
+    }
+
+    return vector_s;
 }
