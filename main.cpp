@@ -14,11 +14,13 @@
 #include <memory>
 
 using namespace std;
+using namespace aria::csv;
 
 struct Player{
     int fifa_id; // Id do Jogador
     string name; // Nome do Jogador
     string positions; // Posi��es do Jogador
+    vector<string> tags; // tags do jogador
     float rating; // M�dia de Avalia��o
     int rcount; // N�mero de Avalia��es
 };
@@ -50,7 +52,7 @@ class hashtable
     public:
         int M; // Tamanho
 
-        hashtable(int T_size = 1)
+        hashtable(int T_size = 32771)
         {
             M = T_size;
             table = new forward_list<Node<Tkey, Tvalue>>[M];
@@ -77,7 +79,8 @@ class hashtable
         {
             unsigned int hashI = hashfunction(key);
 
-            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
+            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
+            {
                 if(key == x->key) // Se o elemento j� existe
                 {
                     x->value.push_back(value);
@@ -154,6 +157,8 @@ int charAt(string str, int d)
     else
         return (str.at(d))-65;
 }
+
+// Estruturas definidas globalmente
 
 #define ALPHABET_SIZE 31
 
@@ -328,7 +333,7 @@ private:
                 index = ItoC(prefixo.at(i));
                 if(current->children[index] == NULL) 
                 {
-                    cout << "Não foi encontrado nenhum jogador." << endl;
+                    cout << "No players found :(" << endl;
                     return;
                 }
                 current = current->children[index];
@@ -380,7 +385,6 @@ void quickSort(int *arr, int low, int high)
         quickSort(arr, i, high);
 }
 
-
 void user_search(int n)
 {
     unsigned int vec_size = user_ratings_table[n]->value.size();
@@ -408,8 +412,39 @@ void user_search(int n)
         }
     }
 
-    for(unsigned int i = 0; i < true_size; i++)
+    for(int i = true_size - 1; i >= 0; i--)
         printPlayer(top20[i]);
+}
+
+void position_search(int n, std::string pos)
+{
+    unsigned int vec_size = position_table[pos]->value.size();
+    unsigned int true_size;
+    int topN[n];
+    if(vec_size > n)
+        true_size = n;
+    else
+        true_size = vec_size;
+
+    for(int i = 0; i < true_size; i++)
+    {
+        topN[i] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+    }
+    quickSort(topN, 0, n-1);
+
+    for(int i = true_size; i < vec_size; i++)
+    {
+        float temp = players_table[position_table[pos]->value[i]]->value.rating;
+        float last_rating = players_table[topN[0]]->value.rating;
+        if(temp > last_rating)
+        {
+            topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+            quickSort(topN, 0, n-1);
+        }
+    }
+
+    for(int i = true_size - 1; i >= 0; i--)
+        printPlayer(topN[i]);
 }
 
 vector<string> str_tokenizer(string s, char del)
@@ -420,22 +455,23 @@ vector<string> str_tokenizer(string s, char del)
     while (!ss.eof()) 
     {
         getline(ss, word, del);
-        vector_s.push_back(word);
+        if (!word.empty())
+            vector_s.push_back(word);
     }
 
     return vector_s;
 }
 
-using namespace aria::csv;
-
-int main() {
+int main(int argc, char** argv) 
+{
+    cout << "Reading names and inserting in trie tree..." << endl;
     Trie *TriePlayers = new Trie();
-
     std::ifstream fPlayer("players.csv");
     CsvParser parser(fPlayer);
 
     bool ignore_first = true;
-    for (auto& row : parser) {
+    for (auto& row : parser) 
+    {
         if(ignore_first)
         {
             ignore_first = false;
@@ -449,15 +485,15 @@ int main() {
         temp.rcount = 0;
 
         players_table.insere(temp.fifa_id,temp);
-
         TriePlayers->InsertWord(temp.name, temp.fifa_id);
 
         vector<string> player_positions = str_tokenizer(temp.positions, ',');
-        for(string pos : player_positions)
+        for(string pos: player_positions)
             position_table.insere_array(pos, temp.fifa_id);
 
     }
 
+    cout << "Reading ratings and inserting in hash table..." << endl;
     std::ifstream fRating("minirating.csv");
     CsvParser parser1(fRating);
 
@@ -480,13 +516,48 @@ int main() {
         else
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
-        temp->rating = 0;
-
         temp->rcount += 1;
         user_ratings_table.insere_array(user_id, player_id);
     }
 
-    while(true)
+    cout << "Reading tags and inserting in hash table..." << endl;
+    ifstream fTags("tags.csv");
+    CsvParser parser2(fTags);
+
+    ignore_first = true;
+    for (auto& row : parser2)
+    {
+        if (ignore_first)
+        {
+            ignore_first = false;
+            continue;
+        }
+
+        unsigned int player_id = std::atoi(row[1].c_str());
+        bool alreadyInserted = false;
+        string player_tag = row[2];
+
+        Player* temp = &(players_table[player_id]->value);
+
+        for (string inserted_tag : temp->tags) // não adiciona tags repetidas
+        {
+            if (player_tag == inserted_tag)
+                alreadyInserted = true;
+        }
+        if (!alreadyInserted)
+            temp->tags.push_back(player_tag);
+
+        /*cout << temp->name << " tags: ";
+        for (string tt : temp->tags)
+            cout << tt << ", ";
+        cout << endl;*/
+
+        // INSERIR NA TABELA HASH
+    }
+
+    cout << "Done" << endl;
+    std::string token;
+    while(token != "exit")
     {
         std::cout << "& ";
         std::string comando;
@@ -494,7 +565,6 @@ int main() {
         std::string delimiter = " ";
 
         size_t pos = comando.find(delimiter);
-        std::string token;
 
         token = comando.substr(0, pos);
         comando.erase(0, pos + delimiter.length());
@@ -502,13 +572,35 @@ int main() {
         if(token == "user")
         {
             user_search(std::atoi(comando.c_str()));
-        } else if(token == "player")
+        }
+        else if(token == "player")
         {
             TriePlayers->possibleSufixos(comando);
-        } else if(token == "end")
-            return 0;
+        }
+        else if(token.substr(0,3) == "top")
+        {
+            token.erase(0,3);
+            int n = std::atoi(token.c_str());
+            if((comando.at(0) == '\'') && (comando.at(comando.length()-1) == '\''))
+                position_search(n, comando.substr(1, comando.length()-2));
+        }
+        else if (token == "tags")
+        {
+            // vetor de strings contendo tags
+            vector<string> tags = str_tokenizer(comando, '"');
+            
+            // filtra espaços entre tags do vetor de strings para obter apenas as tags
+            for (auto str = tags.begin(); str != tags.end(); str++)
+            {
+                if (*str == " ")
+                    tags.erase(str--);
+            }
+        }
+        else if(token == "exit")
+            cout << "Exiting..." << endl;
+        else
+            cout << "Unrecognized command" << endl;
     }
 
     return 0;
 }
-
