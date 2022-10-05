@@ -39,7 +39,8 @@ int main() {
 
         TriePlayers->InsertWord(temp.name, temp.fifa_id);
 
-        vector<string> player_positions = split(temp.positions,",");
+        vector<string> player_positions = split(temp.positions,", ");
+
         for(string pos: player_positions)
             position_table.insere_array<int>(pos, temp.fifa_id);
 
@@ -226,26 +227,43 @@ void position_search(int n, std::string pos)
         true_size = vec_size;
 
     int topN[true_size];
-
-    for(int i = 0; i < true_size; i++)
+    int i = 0;
+    int inc = 0;
+    int valor_de_corte = 1000;
+    while((i < true_size) && (i + inc < vec_size))
     {
-        topN[i] = players_table[position_table[pos]->value[i]]->value.fifa_id;
-    }
-    quickSort(topN, 0, true_size-1);
-
-    for(int i = true_size; i < vec_size; i++)
-    {
-        float temp = players_table[position_table[pos]->value[i]]->value.rating;
-        float last_rating = players_table[topN[0]]->value.rating;
-        if(temp > last_rating)
+        if(players_table[position_table[pos]->value[i + inc]]->value.rcount >= valor_de_corte)
         {
-            topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
-            quickSort(topN, 0, true_size-1);
+            topN[i] = players_table[position_table[pos]->value[i + inc]]->value.fifa_id;
+            i++;
         }
+        else
+            inc++;
+    }
+    if(i == 0) // Se ele não achou ninguem com mais de 1000 avaliações, sai fora
+        return;
+
+    true_size = i - 1;
+    quickSort(topN, 0, true_size);
+
+    i = true_size;
+    while(i < vec_size)
+    {
+        if(players_table[position_table[pos]->value[i]]->value.rcount >= valor_de_corte)
+        {
+            float temp = players_table[position_table[pos]->value[i]]->value.rating;
+            float last_rating = players_table[topN[0]]->value.rating;
+            if(temp > last_rating)
+            {
+                topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+                quickSort(topN, 0, true_size);
+            }
+        }
+        i++;
     }
 
     std::cout << "sofifa_id, name, positions, global_rating, count" << std::endl;
-    for(int i = true_size - 1; i >= 0; i--)
+    for(int i = true_size; i >= 0; i--)
         printPlayer(topN[i]);
 }
 

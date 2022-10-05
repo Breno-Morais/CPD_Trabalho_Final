@@ -143,7 +143,6 @@ vector<string> split(string str, string token){
     vector<string>result;
     while(str.size()){
         unsigned int index = str.find(token);
-        if(str[0] == ' ') str.erase(0,1);
         if(index!=string::npos){
             result.push_back(str.substr(0,index));
             str = str.substr(index+token.size());
