@@ -1,443 +1,17 @@
-#include <iostream>
 #include "./parser.hpp"
-#include <sstream>
-#include <fstream>
-#include <string>
-#include <cstdlib>
-#include <cstdio>
-#include <forward_list>
-#include <vector>
-#include <math.h>
-#include <stdlib.h>
-#include <iterator>
-#include <algorithm>
-#include <memory>
+#include "estruturas.hpp"
 
 using namespace std;
 
-struct Player{
-    int fifa_id; // Id do Jogador
-    string name; // Nome do Jogador
-    string positions; // Posições do Jogador
-    float rating; // Média de Avaliação
-    int rcount; // Número de Avaliações
-};
-
-template <class Tkey, class Tvalue>
-struct Node
-{
-    Tkey key;
-    Tvalue value;
-};
-
-template <class Tkey, class Tvalue>
-class hashtable
-{
-    private:
-        forward_list<Node<Tkey, Tvalue>> *table;
-        unsigned int hashfunction(int id)
-        {
-            return id % M;
-        }
-        unsigned int hashfunction(string id)
-        {
-            int hashI = 0;
-            for(int i = 0; i < (int)id.length(); i++)
-                hashI = (31 * hashI + id.at(i)) % M;
-
-            return hashI;
-        }
-    public:
-        int M; // Tamanho
-
-        hashtable(int T_size = 1)
-        {
-            M = T_size;
-            table = new forward_list<Node<Tkey, Tvalue>>[M];
-        }
-
-        ~hashtable()
-        {
-            delete[] table;
-        }
-
-        void insere(Tkey key, Tvalue value)
-        {
-            unsigned int hashI = hashfunction(key);
-
-            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x){
-                if(key == x->key) // Se o elemento já existe
-                    return;   // Não faz nada
-            }
-            Node<Tkey,Tvalue> myNode = {.key = key, .value = value};
-            table[hashI].push_front(myNode);
-        }
-
-        void insere_array(Tkey key, int value)
-        {
-            unsigned int hashI = hashfunction(key);
-
-            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
-            {
-                if(key == x->key) // Se o elemento já existe
-                {
-                    x->value.push_back(value);
-                    return;
-                }
-            }
-            Node<Tkey,Tvalue> myNode = {.key = key, .value = std::vector<int>{value}};
-            table[hashI].push_front(myNode);
-        }
-
-        Node<Tkey, Tvalue>* operator[](Tkey key)
-        {
-            int hashI = hashfunction(key);
-
-            for(auto x = table[hashI].begin(); x != table[hashI].end(); ++x)
-            {
-                if(key == x->key)
-                {
-                    return &(*x);
-                }
-            }
-
-            Node<Tkey,Tvalue> myNode;
-            return &myNode;
-        }
-};
-
-template <typename T>
-struct range_t
-{
-    T b, e;
-    range_t(T x, T y) : b(x), e(y) {}
-    T begin()
-    {
-        return b;
-    }
-    T end()
-    {
-        return e;
-    }
-};
-
-template <typename T>
-range_t<T> range(T b, T e)
-{
-    return range_t<T>(b, e);
-}
-
-vector<string> split(string str, string token){
-    vector<string>result;
-    while(str.size()){
-        unsigned int index = str.find(token);
-        if(index!=string::npos){
-            result.push_back(str.substr(0,index));
-            str = str.substr(index+token.size());
-            if(str.size()==0)result.push_back(str);
-        }else{
-            result.push_back(str);
-            break;
-        }
-    }
-    return result;
-}
-
-template<typename T>
-void printVector(const T& t) {
-    std::copy(t.cbegin(), t.cend(), std::ostream_iterator<typename T::value_type>(std::cout, ", "));
-}
-
-int charAt(string str, int d)
-{
-    if (int(str.size()) <= d)
-        return -1;
-    else
-        return (str.at(d))-65;
-}
-
-#define ALPHABET_SIZE 31
-
-hashtable<int,Player> players_table(18944 * 5);
-hashtable<int,vector<int>> user_ratings_table;
+hashtable<int,Player> players_table(100000);
+hashtable<int,vector<Avaliacao>> user_ratings_table(500000);
 hashtable<string,vector<int>> position_table(21);
 
-void printPlayer(int id)
-{
-    Player temp = players_table[id]->value;
-    std::cout << id << ", " << temp.name << ", [" << temp.positions << "] ," << temp.rating << ", " << temp.rcount << std::endl;
-}
-
-class Trie
-{
-private:
-        class Trie_Node
-        {
-            public:
-                Trie_Node *children[ALPHABET_SIZE];
-
-                bool isWord;
-                int id;
-
-                Trie_Node()
-                {
-                    for(int i = 0; i < ALPHABET_SIZE; i++)
-                    {
-                        children[i] = NULL;
-                    }
-
-                    isWord = false;
-                    id = -1;
-                }
-
-                ~Trie_Node()
-                {
-                    for(int i = 0; i < ALPHABET_SIZE; i++)
-                        if(children[i])
-                        {
-                            delete children[i];
-                            children[i] = NULL;
-                        }
-
-                    delete this;
-                }
-        };
-
-        bool isLastNode(Trie_Node *current)
-        {
-            for(int i = 0; i < ALPHABET_SIZE; i++)
-                if(current->children[i])
-                    return false;
-            return true;
-        }
-
-       int ItoC(char c)
-        {
-            switch(c)
-            {
-                case ' ':
-                    return 26;
-                    break;
-
-                case '\'':
-                    return 27;
-                    break;
-
-                case '-':
-                    return 28;
-                    break;
-
-                case '.':
-                    return 29;
-                    break;
-
-                case '"':
-                    return 30;
-                    break;
-
-                default:
-                    return static_cast<int>(std::tolower(c) - 'a');
-            }
-        }
-
-        char CtoI(int i)
-        {
-            switch(i)
-            {
-                case 26:
-                    return ' ';
-                    break;
-
-                case 27:
-                    return '\'';
-                    break;
-
-                case 28:
-                    return '-';
-                    break;
-
-                case 29:
-                    return '.';
-                    break;
-
-                case 30:
-                    return '"';
-                    break;
-
-                default:
-                    return static_cast<int>('a' + i);
-            }
-        }
-
-    public:
-        Trie_Node *root;
-        int Total_Words;
-
-        Trie()
-        {
-            root = new Trie_Node();
-            Total_Words = 0;
-        }
-
-        void InsertWord(string& str, int id)
-        {
-            Trie_Node *current = root;
-            for(unsigned int i = 0; i < str.size(); i++)
-            {
-                int c = ItoC(str[i]);
-
-                if(current->children[c] == NULL)
-                {
-                    current->children[c] = new Trie_Node();
-                }
-
-                current = (current->children[c]);
-            }
-
-            current->isWord = true;
-            current->id = id;
-        }
-
-        bool SearchWord(string& str)
-        {
-            Trie_Node *current = root;
-
-            for(unsigned int i = 0; i < str.size(); i++)
-            {
-                if(current->children[ItoC(str[i])] == NULL)
-                    return false;
-
-                current = (current->children[ItoC(str[i])]);
-            }
-
-            if(current->isWord == true)
-            {
-                std::cout << "\nID: " << current->id << std::endl;
-                return true;
-            }
-
-            return false;
-        }
-
-        void possibleSufixos(std::string& prefixo)
-        {
-            Trie_Node *current = root;
-            int index;
-
-            for(unsigned int i = 0; i < prefixo.length(); i++)
-            {
-                index = ItoC(prefixo.at(i));
-                if(current->children[index] == NULL) return;
-                current = current->children[index];
-            }
-
-            caminha(prefixo, current);
-
-            return;
-        }
-
-        void caminha(std::string prefixo, Trie_Node* current)
-        {
-            if(current->isWord)
-                printPlayer(current->id);
-
-            for(int i = 0; i < ALPHABET_SIZE; ++i)
-            {
-                if(current->children[i])
-                    caminha(prefixo + CtoI(i), current->children[i]);
-            }
-        }
-};
-
-void quickSort(int *arr, int low, int high)
-{
-    int i = low;
-    int j = high;
-    float pivot = players_table[arr[(i + j) / 2]]->value.rating;
-    int temp;
-
-    while (i <= j)
-    {
-        while (players_table[arr[i]]->value.rating < pivot)
-            i++;
-        while (players_table[arr[j]]->value.rating > pivot)
-            j--;
-        if (i <= j)
-        {
-            temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
-            i++;
-            j--;
-        }
-    }
-    if (j > low)
-        quickSort(arr, low, j);
-    if (i < high)
-        quickSort(arr, i, high);
-}
-
-void user_search(int n)
-{
-    unsigned int vec_size = user_ratings_table[n]->value.size();
-    unsigned int true_size;
-    int top20[20];
-    if(vec_size > 20)
-        true_size = 20;
-    else
-        true_size = vec_size;
-
-    for(int i = 0; i < true_size; i++)
-    {
-        top20[i] = players_table[user_ratings_table[n]->value[i]]->value.fifa_id;
-    }
-    quickSort(top20, 0, vec_size-1);
-
-    for(int i = true_size; i < vec_size; i++)
-    {
-        float temp = players_table[user_ratings_table[n]->value[i]]->value.rating;
-        float last_rating = players_table[top20[19]]->value.rating;
-        if(temp > last_rating)
-        {
-            top20[19] = players_table[user_ratings_table[n]->value[i]]->value.fifa_id;
-            quickSort(top20, 0, vec_size-1);
-        }
-    }
-
-    for(int i = true_size - 1; i >= 0; i--)
-        printPlayer(top20[i]);
-}
-
-void position_search(int n, std::string pos)
-{
-    unsigned int vec_size = position_table[pos]->value.size();
-    unsigned int true_size;
-    int topN[n];
-    if(vec_size > n)
-        true_size = n;
-    else
-        true_size = vec_size;
-
-    for(int i = 0; i < true_size; i++)
-    {
-        topN[i] = players_table[position_table[pos]->value[i]]->value.fifa_id;
-    }
-    quickSort(topN, 0, n-1);
-
-    for(int i = true_size; i < vec_size; i++)
-    {
-        float temp = players_table[position_table[pos]->value[i]]->value.rating;
-        float last_rating = players_table[topN[0]]->value.rating;
-        if(temp > last_rating)
-        {
-            topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
-            quickSort(topN, 0, n-1);
-        }
-    }
-
-    for(int i = true_size - 1; i >= 0; i--)
-        printPlayer(topN[i]);
-}
+void printPlayer(int id);
+void quickSort(int *arr, int low, int high);
+void quickSortAv(Avaliacao *arr, int low, int high);
+void user_search(int n);
+void position_search(int n, std::string pos);
 
 using namespace aria::csv;
 
@@ -467,11 +41,11 @@ int main() {
 
         vector<string> player_positions = split(temp.positions,",");
         for(string pos: player_positions)
-            position_table.insere_array(pos, temp.fifa_id);
+            position_table.insere_array<int>(pos, temp.fifa_id);
 
     }
 
-    std::ifstream fRating("minirating.csv");
+    std::ifstream fRating("rating.csv");
     CsvParser parser1(fRating);
 
     ignore_first = true;
@@ -494,7 +68,7 @@ int main() {
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
         temp->rcount += 1;
-        user_ratings_table.insere_array(user_id, player_id);
+        user_ratings_table.insere_array<Avaliacao>(user_id, {player_id, rating});
     }
 
     while(true)
@@ -530,5 +104,148 @@ int main() {
     }
 
     return 0;
+}
+
+using namespace std;
+
+void printPlayer(int id)
+{
+    Player temp = players_table[id]->value;
+    std::cout << id << ", " << temp.name << ", [" << temp.positions << "] ," << temp.rating << ", " << temp.rcount << std::endl;
+}
+
+void quickSort(int *arr, int low, int high)
+{
+    int i = low;
+    int j = high;
+    float pivot = players_table[arr[(i + j) / 2]]->value.rating;
+    int temp;
+
+    while (i <= j)
+    {
+        while (players_table[arr[i]]->value.rating < pivot)
+            i++;
+        while (players_table[arr[j]]->value.rating > pivot)
+            j--;
+        if (i <= j)
+        {
+            temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i++;
+            j--;
+        }
+    }
+    if (j > low)
+        quickSort(arr, low, j);
+    if (i < high)
+        quickSort(arr, i, high);
+}
+
+void quickSortAv(Avaliacao *arr, int low, int high)
+{
+    int i = low;
+    int j = high;
+    float pivot = arr[(i + j) / 2].nota;
+    Avaliacao temp;
+
+    while (i <= j)
+    {
+        while (arr[i].nota < pivot)
+            i++;
+        while (arr[j].nota > pivot)
+            j--;
+        if (i <= j)
+        {
+            temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+            i++;
+            j--;
+        }
+    }
+    if (j > low)
+        quickSortAv(arr, low, j);
+    if (i < high)
+        quickSortAv(arr, i, high);
+}
+
+void user_search(int n)
+{
+    if(user_ratings_table[n] == NULL)
+    {
+        std::cout << "USUARIO NAO ENCONTRADO"  << std::endl;
+        return;
+    }
+    unsigned int vec_size = user_ratings_table[n]->value.size();
+    unsigned int true_size;
+    if(vec_size > 20)
+        true_size = 20;
+    else
+        true_size = vec_size;
+
+    Avaliacao top20[true_size];
+
+    for(unsigned int i = 0; i < true_size; i++)
+    {
+        top20[i] = user_ratings_table[n]->value[i];
+    }
+    quickSortAv(top20, 0, true_size-1);
+
+    for(unsigned int i = true_size; i < vec_size; i++)
+    {
+        float temp = user_ratings_table[n]->value[i].nota;
+        float last_rating = top20[0].nota;
+        if(temp > last_rating)
+        {
+            top20[0] = user_ratings_table[n]->value[i];
+            quickSortAv(top20, 0, true_size-1);
+        }
+    }
+
+    std::cout << "sofifa_id, name, positions, global_rating, count, rating" << std::endl;
+    for(int i = true_size - 1; i >= 0; i--)
+    {
+        Player temp = players_table[top20[i].id_player]->value;
+        std::cout << temp.fifa_id << ", " << temp.name << ", [" << temp.positions << "] ," << temp.rating << ", " << temp.rcount << ", " << top20[i].nota <<std::endl;
+    }
+}
+
+void position_search(int n, std::string pos)
+{
+    if(position_table[pos] == NULL)
+    {
+        std::cout << "POSICAO NAO ENCONTRADA"  << std::endl;
+        return;
+    }
+    unsigned int vec_size = position_table[pos]->value.size();
+    unsigned int true_size;
+    if(vec_size > n)
+        true_size = n;
+    else
+        true_size = vec_size;
+
+    int topN[true_size];
+
+    for(int i = 0; i < true_size; i++)
+    {
+        topN[i] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+    }
+    quickSort(topN, 0, true_size-1);
+
+    for(int i = true_size; i < vec_size; i++)
+    {
+        float temp = players_table[position_table[pos]->value[i]]->value.rating;
+        float last_rating = players_table[topN[0]]->value.rating;
+        if(temp > last_rating)
+        {
+            topN[0] = players_table[position_table[pos]->value[i]]->value.fifa_id;
+            quickSort(topN, 0, true_size-1);
+        }
+    }
+
+    std::cout << "sofifa_id, name, positions, global_rating, count" << std::endl;
+    for(int i = true_size - 1; i >= 0; i--)
+        printPlayer(topN[i]);
 }
 

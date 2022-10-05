@@ -20,9 +20,19 @@
 	<string>
 	<vector>
 
-1664640433 source:d:\users\bnero\documents\github\cpd_trabalho_final\main.cpp
-	<iostream>
+1664931880 source:d:\users\bnero\documents\github\cpd_trabalho_final\main.cpp
 	"./parser.hpp"
+	"estruturas.hpp"
+
+1662378299 d:\users\bnero\documents\github\cpd_trabalho_final\parser.hpp
+	<fstream>
+	<memory>
+	<stdexcept>
+	<string>
+	<vector>
+
+1664932022 d:\users\bnero\documents\github\cpd_trabalho_final\estruturas.hpp
+	<iostream>
 	<sstream>
 	<fstream>
 	<string>
@@ -34,12 +44,4 @@
 	<stdlib.h>
 	<iterator>
 	<algorithm>
-	<memory>
-
-1662378299 d:\users\bnero\documents\github\cpd_trabalho_final\parser.hpp
-	<fstream>
-	<memory>
-	<stdexcept>
-	<string>
-	<vector>
 
