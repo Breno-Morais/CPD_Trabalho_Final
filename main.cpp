@@ -494,7 +494,7 @@ int main(int argc, char** argv)
     }
 
     cout << "Reading ratings and inserting in hash table..." << endl;
-    std::ifstream fRating("rating.csv");
+    std::ifstream fRating("minirating.csv");
     CsvParser parser1(fRating);
 
     ignore_first = true;
