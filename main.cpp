@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
             temp->rating = temp->rating + (1.0f/i1)*(rating - temp->rating);
 
         temp->rcount += 1;
-        //user_ratings_table.insere_array<Avaliacao>(user_id, {player_id, rating});
+        user_ratings_table.insere_array<Avaliacao>(user_id, {player_id, rating});
         //user_ratings_table.insere_array(user_id, player_id);
     }
 
