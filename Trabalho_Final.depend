@@ -45,3 +45,28 @@
 	<iterator>
 	<algorithm>
 
+1665009230 source:/home/hugobbi/UFRGS/CPD/CPD_Trabalho_Final/main.cpp
+	"./parser.hpp"
+	"estruturas.hpp"
+
+1665004839 /home/hugobbi/UFRGS/CPD/CPD_Trabalho_Final/parser.hpp
+	<fstream>
+	<memory>
+	<stdexcept>
+	<string>
+	<vector>
+
+1665007418 /home/hugobbi/UFRGS/CPD/CPD_Trabalho_Final/estruturas.hpp
+	<iostream>
+	<sstream>
+	<fstream>
+	<string>
+	<cstdlib>
+	<cstdio>
+	<forward_list>
+	<vector>
+	<math.h>
+	<stdlib.h>
+	<iterator>
+	<algorithm>
+
