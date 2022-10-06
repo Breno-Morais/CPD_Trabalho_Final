@@ -20,6 +20,8 @@ void tags_search(std::vector<string> tags_to_be_searched);
 
 int main(int argc, char** argv) 
 {
+    auto start = chrono::steady_clock::now();
+
     cout << "Reading names and inserting in trie tree..." << endl;
     Trie *TriePlayers = new Trie();
     std::ifstream fPlayer("players.csv");
@@ -104,14 +106,12 @@ int main(int argc, char** argv)
             temp->tags.push_back(player_tag);
 
         tags_table.insere_array<int>(player_tag, temp->fifa_id);
-
-        /*cout << temp->name << " tags: ";
-        for (string tt : temp->tags)
-            cout << tt << ", ";
-        cout << endl;*/
     }
 
     cout << "Done" << endl;
+    auto end = chrono::steady_clock::now();
+    cout << "Loading time: " << chrono::duration_cast<chrono::milliseconds>(end-start).count() << " milliseconds" << endl;
+
     string token;
     while(token != "exit")
     {
@@ -338,8 +338,11 @@ void tags_search(std::vector<string> tags_to_be_searched)
 {
     for (string tag_requested : tags_to_be_searched) // verifica se alguma tag passsada não possui jogadores na hash table
     {
-        if (tags_table[tag_requested]->value.empty())
-            cout << "No players found" << endl;
+        if (tags_table[tag_requested] == NULL)
+        {
+            cout << "Invalid tag: " << tag_requested << endl;
+            return;
+        }
     }
 
     vector<int> players_with_tag = tags_table[tags_to_be_searched[0]]->value;
