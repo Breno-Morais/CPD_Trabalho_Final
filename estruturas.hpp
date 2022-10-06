@@ -1,3 +1,5 @@
+// Breno Morais 335794 e Henrique Gobbi 334932
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -329,7 +331,11 @@ private:
             for(unsigned int i = 0; i < prefixo.length(); i++)
             {
                 index = ItoC(prefixo.at(i));
-                if(current->children[index] == NULL) return;
+                if(current->children[index] == NULL) 
+                {
+                    cout << "No players found" << endl;
+                    return;
+                }   
                 current = current->children[index];
             }
 

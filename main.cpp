@@ -1,3 +1,5 @@
+// Breno Morais 335794 e Henrique Gobbi 334932
+
 #include "./parser.hpp"
 #include "estruturas.hpp"
 
@@ -366,6 +368,9 @@ void tags_search(std::vector<string> tags_to_be_searched)
     vector<int> filtered_players_with_tag = removeDuplicates(players_with_tag);
     for (int filtered_player_id : filtered_players_with_tag)
         printPlayer(filtered_player_id);
+    
+    if (filtered_players_with_tag.size() == 0)
+        cout << "No players found" << endl;
 }
 
 vector<int> removeDuplicates(const vector<int>& in_vector)
